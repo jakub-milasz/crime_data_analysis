@@ -14,4 +14,4 @@ This project involves an analysis of crime data from Krakow. As part of the anal
 
 - R script
   
-- HTML report
+- HTML report to download
