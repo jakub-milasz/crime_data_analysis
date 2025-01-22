@@ -11,9 +11,9 @@
 
 <meta name="author" content="Jakub Milasz" />
 
-<meta name="date" content="2024-11-16" />
+<meta name="date" content="2025-01-22" />
 
-<title>Milasz_Jakub_1_projekt1</title>
+<title>Analiza</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,15 +350,14 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Milasz_Jakub_1_projekt1</h1>
+<h1 class="title toc-ignore">Analiza</h1>
 <h4 class="author">Jakub Milasz</h4>
-<h4 class="date">2024-11-16</h4>
+<h4 class="date">2025-01-22</h4>
 
 </div>
 
 
-<pre class="r"><code># Ładowanie bibliotek
-library(sf)</code></pre>
+<pre class="r"><code>library(sf)</code></pre>
 <pre><code>## Warning: pakiet &#39;sf&#39; został zbudowany w wersji R 4.3.3</code></pre>
 <pre><code>## Linking to GEOS 3.11.2, GDAL 3.8.2, PROJ 9.3.1; sf_use_s2() is TRUE</code></pre>
 <pre class="r"><code>library(dbscan)</code></pre>
@@ -368,6 +367,8 @@ library(sf)</code></pre>
 <pre><code>## Następujący obiekt został zakryty z &#39;package:stats&#39;:
 ## 
 ##     as.dendrogram</code></pre>
+<pre class="r"><code>library(ggplot2)</code></pre>
+<pre><code>## Warning: pakiet &#39;ggplot2&#39; został zbudowany w wersji R 4.3.2</code></pre>
 <pre class="r"><code>library(dplyr)</code></pre>
 <pre><code>## Warning: pakiet &#39;dplyr&#39; został zbudowany w wersji R 4.3.2</code></pre>
 <pre><code>## 
@@ -379,11 +380,11 @@ library(sf)</code></pre>
 ## 
 ##     intersect, setdiff, setequal, union</code></pre>
 <pre class="r"><code># Ustawienie katalogu roboczego
-setwd(&quot;~/ArcGIS/Projects/adp_lab&quot;)
+setwd(&quot;~/ArcGIS/Projects/project&quot;)
 
 # Wczytanie danych
-przestepstwa &lt;- read_sf(dsn = &quot;./zestaw1_data&quot;, layer = &quot;zestaw1_transformed&quot;)
-osiedla &lt;- read_sf(dsn = &#39;./osiedla&#39;, layer = &quot;osiedla&quot;)
+osiedla &lt;- read_sf(dsn=&quot;dane/osiedla/&quot;, layer = &quot;osiedla&quot;)
+przestepstwa &lt;- read_sf(dsn=&quot;dane/projected_data/&quot;, layer = &quot;projected_data&quot;)
 
 # Skopiowanie tabeli przestępstw na potrzeby hdbscan
 przestepstwa_hdbscan &lt;- przestepstwa
@@ -465,9 +466,8 @@ print(table(przestepstwa$cluster))</code></pre>
 ##  61  62  63  64  65  66  67  68  69  70  71 
 ##   4   8   4   4   4   4   6   3   4   5   4</code></pre>
 <pre class="r"><code># Wizualizacja
-library(ggplot2)</code></pre>
-<pre><code>## Warning: pakiet &#39;ggplot2&#39; został zbudowany w wersji R 4.3.2</code></pre>
-<pre class="r"><code>ggplot() +
+library(ggplot2)
+ggplot() +
   geom_sf(data = osiedla, fill = NA, color = &#39;blue&#39;) + # Osiedla
   geom_sf(data = przestepstwa, aes(color = factor(cluster)), size = 2) + # Przestępstwa
   scale_color_manual(values = rainbow(length(unique(przestepstwa$cluster)))) + # Kolory klastrów
@@ -546,13 +546,13 @@ parametr minPts = 30, ponieważ dla minPts = 4 wynik nie był
 zadowalający. Im wyższa wartość minPts, tym klasteryzacja jest bardziej
 konserwatywna i większa liczba punktów będzie umieszczana jako szum.
 Odnosząc się do lokalizacji klastrów można zauważyć, że największe
-zagęszczenie przestępstw występuje w centrum miasta. Może to być
-spowodowane najwiekszym gromadzeniem się ludności właśnie tam. Drugim
-miejscem, w którym można zauważyć wzmożoną aktywność przestępczą są
-osiedla położone na północny wschód od centrum (m. in. Bieńczyce i
-Krzesławice). Bardzo klarownie przedstawia to klasteryzacja metodą
-HDBSCAN. Pozostałe osiedla cechują się stosunkowo niskim poziomem
-przestępczości.</p>
+zagęszczenie przestępstw występuje w centrum miasta (dla obu metod
+powstał tam duży klaster). Może to być spowodowane najwiekszym
+gromadzeniem się ludności właśnie tam. Drugim miejscem, w którym można
+zauważyć wzmożoną aktywność przestępczą są osiedla położone na północny
+wschód od centrum (m. in. Bieńczyce i Krzesławice). Bardzo klarownie
+przedstawia to klasteryzacja metodą HDBSCAN. Pozostałe osiedla cechują
+się stosunkowo niskim poziomem przestępczości.</p>
 
 
 

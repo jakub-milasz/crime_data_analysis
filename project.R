@@ -1,14 +1,14 @@
-# Ładowanie bibliotek
 library(sf)
 library(dbscan)
+library(ggplot2)
 library(dplyr)
 
 # Ustawienie katalogu roboczego
-setwd("~/ArcGIS/Projects/adp_lab")
+setwd("~/ArcGIS/Projects/project")
 
 # Wczytanie danych
-przestepstwa <- read_sf(dsn = "./zestaw1_data", layer = "zestaw1_transformed")
-osiedla <- read_sf(dsn = './osiedla', layer = "osiedla")
+osiedla <- read_sf(dsn="dane/osiedla/", layer = "osiedla")
+przestepstwa <- read_sf(dsn="dane/projected_data/", layer = "projected_data")
 
 # Skopiowanie tabeli przestępstw na potrzeby hdbscan
 przestepstwa_hdbscan <- przestepstwa
