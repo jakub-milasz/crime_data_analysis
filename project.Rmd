@@ -1,0 +1,161 @@
+---
+title: "project"
+author: "Jakub Milasz"
+date: "2024-11-16"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+library(sf)
+library(dbscan)
+library(ggplot2)
+library(dplyr)
+
+# Set working directory
+setwd("~/ArcGIS/Projects/project")
+
+# Load data
+osiedla <- read_sf(dsn="dane/osiedla/", layer = "osiedla")
+przestepstwa <- read_sf(dsn="dane/projected_data/", layer = "projected_data")
+
+# Copy crime table for HDBSCAN analysis
+przestepstwa_hdbscan <- przestepstwa
+
+# Extract crime coordinates
+coords <- st_coordinates(przestepstwa)
+```
+ **DBSCAN**
+ 
+ 
+ Algorithm principle:
+ 
+ 1. Choose parameters:
+ 
+   a) eps - the radius of the neighborhood in which the number of neighbors for a given point is checked.
+      
+   b) minPts - the minimum number of points required to form a cluster.
+   
+ 2. Identify points that have at least minPts neighbors within the eps radius (including itself). These points are called core points.
+    Points within the circle but not core points are called directly reachable points from the core. The remaining points are noise.
+    
+ 3. A cluster is formed by a core point and all directly reachable points from it.
+    
+    
+ Advantages:
+ 
+ 1. DBSCAN does not require specifying the number of clusters in advance, unlike the k-means method.
+    
+ 2. DBSCAN can find arbitrarily shaped clusters. It can even find a cluster completely surrounded by another cluster (but not connected to it). Thanks to the MinPts parameter, the so-called single-link effect (different clusters connected by a thin line of points) is reduced.
+    
+ 3. DBSCAN identifies noise and is resistant to outliers.
+ 
+ 4. DBSCAN requires only two parameters and is mostly insensitive to the order of points in the dataset.
+ 
+ 5. The minPts and ε parameters can be set by an expert in the field if the data is well understood.
+    
+    
+ Disadvantages:
+ 
+ 1. DBSCAN is not completely deterministic: boundary points that are reachable from more than one cluster may belong to either of them, depending on the processing order. However, for core points and noise points, DBSCAN is deterministic.
+    
+ 2. The quality of DBSCAN depends on the distance metric. The most commonly used distance metric is Euclidean distance. Particularly for high-dimensional data, this metric can become nearly useless due to the so-called "curse of dimensionality," making it difficult to find an appropriate value for eps. However, this effect also occurs in any other algorithm based on Euclidean distance.
+    
+ 3. DBSCAN cannot effectively cluster datasets with large density differences, as it is not possible to properly select the minPts - eps combination for all clusters.
+```{r}
+# Function for DBSCAN analysis with selected parameters
+analyze_dbscan <- function(eps, minPts) {
+  # Perform DBSCAN analysis using dbscan() function
+  dbscan_result <- dbscan(coords, eps = eps, minPts = minPts)
+  # Add cluster results to the crime data frame
+  przestepstwa$cluster <- dbscan_result$cluster
+  # Remove noise
+  przestepstwa <- filter(przestepstwa, przestepstwa$cluster != 0)
+  # Display results
+  print(table(przestepstwa$cluster))
+  # Visualization
+  library(ggplot2)
+  ggplot() +
+    geom_sf(data = osiedla, fill = NA, color = 'blue') + # Neighborhoods
+    geom_sf(data = przestepstwa, aes(color = factor(cluster)), size = 2) + # Crimes
+    scale_color_manual(values = rainbow(length(unique(przestepstwa$cluster)))) + # Cluster colors
+    theme_minimal() +
+    labs(title = paste0("Crime Clusters and Neighborhoods\n(DBSCAN minPts = ", minPts,", eps = ", eps, ")"),
+         color = "Cluster") +
+    theme(legend.position = "right")
+}
+
+# Several DBSCAN examples with different parameters
+analyze_dbscan(200, 4)
+analyze_dbscan(500, 4)
+analyze_dbscan(200, 10)
+```
+ 
+ **HDBSCAN**
+ 
+ 
+ Algorithm principle:
+ 
+ This algorithm is an extension of DBSCAN. It identifies cluster cores
+ as points that have a sufficient number of neighboring points (greater than or equal to the set threshold)
+ within a given neighborhood radius (eps).
+ These core clusters then merge with points that are in close proximity to any core point (closer than the threshold), forming a complete cluster.
+ Points that are not assigned to any cluster are considered noise.
+ 
+ 
+ Advantages:
+ 
+ 1. HDBSCAN generates a hierarchical cluster structure, which allows for better analysis of complex data and identification of different density levels in the dataset.
+    
+ 2. The algorithm does not require prior specification of the number of clusters, which is a major advantage compared to algorithms like k-means.
+    
+ 3. HDBSCAN is effective in identifying noise and outliers, improving the quality of generated clusters.
+    
+ 4. It can handle datasets with varying densities, making it more flexible than standard DBSCAN.
+    
+ 5. Compared to other hierarchical algorithms, HDBSCAN is relatively fast and computationally efficient.
+    
+    
+ Disadvantages:
+ 
+ 1. Although HDBSCAN eliminates the need to specify the number of clusters, it still requires setting a minimum sample size ("min_samples"), which can be challenging to optimize.
+    
+ 2. While HDBSCAN is relatively fast, it may still struggle with performance when dealing with very large datasets compared to simpler algorithms.
+    
+ 3. Due to its mathematical and conceptual complexity, it may be more difficult to understand and implement compared to more basic clustering algorithms.
+```{r}
+# Function for HDBSCAN analysis with selected parameter
+analyze_hdbscan <- function(minPts) {
+  # Perform HDBSCAN analysis using hdbscan() function
+  hdbscan_result <- hdbscan(coords, minPts = minPts)
+  # Add cluster results to the crime data frame
+  przestepstwa_hdbscan$cluster <- as.factor(hdbscan_result$cluster)
+  # Remove noise
+  przestepstwa_hdbscan <- filter(przestepstwa_hdbscan, przestepstwa_hdbscan$cluster != 0)
+  # Display results
+  print(table(przestepstwa_hdbscan$cluster))
+  # Visualization
+  ggplot() +
+    geom_sf(data = osiedla, fill = NA, color = 'blue') + # Neighborhoods
+    geom_sf(data = przestepstwa_hdbscan, aes(color = cluster), size = 2) + # Crimes
+    scale_color_manual(values = rainbow(length(unique(przestepstwa_hdbscan$cluster)))) +
+    theme_minimal() +
+    labs(title = paste0("Crime Clusters and Neighborhoods (HDBSCAN minPts = ", minPts, ")"),
+         color = "Cluster") +
+    theme(legend.position = "right")
+}
+
+# Several HDBSCAN examples with different parameters
+analyze_hdbscan(30)
+analyze_hdbscan(10)
+analyze_hdbscan(60)
+```
+
+**Comparison of Results and Conclusions**
+
+As can be observed, the results of the DBSCAN method vary depending on the input parameters. A small value of this parameter results in a large number of clusters, but it is generally correct, as it is assumed that minPts ≥ 2D, where D is the number of dimensions (in this case, D=2).
+
+In the HDBSCAN method, I set the minPts parameter to 30, 10, and 60, respectively. The higher the minPts value, the more conservative the clustering becomes, and a larger number of points are classified as noise.
+
+Comparing the cluster locations in both methods, it can be observed that the highest concentration of crimes occurs in the city center. This may be due to the highest population density in that area. The second area with increased criminal activity is the neighborhoods located northeast of the center (including Bieńczyce and Krzesławice). This is very clearly illustrated by the HDBSCAN clustering method. Other neighborhoods exhibit relatively low crime levels.
