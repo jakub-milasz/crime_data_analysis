@@ -15,6 +15,8 @@ This project involves an analysis of crime data from Krakow. As part of the anal
 - R script
   
 - HTML report to download
+  
+- .Rmd file
 
 ## Some maps
 
