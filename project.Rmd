@@ -25,7 +25,16 @@ przestepstwa_hdbscan <- przestepstwa
 
 # Extract crime coordinates
 coords <- st_coordinates(przestepstwa)
+
+# Visualization of all points
+ggplot() +
+  geom_sf(data = osiedla, fill = NA, color = 'blue') + # Neighborhoods
+  geom_sf(data = przestepstwa, color = 'green', size = 1.5) + # Crimes
+  theme_minimal() +
+  labs(title = "Crimes in Cracow") +
+  theme(legend.position = "right")
 ```
+ 
  **DBSCAN**
  
  
@@ -135,6 +144,8 @@ analyze_hdbscan <- function(minPts) {
   przestepstwa_hdbscan <- filter(przestepstwa_hdbscan, przestepstwa_hdbscan$cluster != 0)
   # Display results
   print(table(przestepstwa_hdbscan$cluster))
+  # Dendrogram
+  plot(hdbscan_result)
   # Visualization
   ggplot() +
     geom_sf(data = osiedla, fill = NA, color = 'blue') + # Neighborhoods
