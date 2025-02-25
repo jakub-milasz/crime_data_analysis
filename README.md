@@ -1,6 +1,6 @@
-# Crime Data Analysis in Cracow
+# Crime Data Analysis in Krakow
 
-This project involves an analysis of crime data from Cracow. The aim of the project is to identify areas with increased intensity of recorded offenses in the city of Cracow. As part of the analysis:
+This project involves an analysis of crime data from Krakow. The aim of the project is to identify areas with increased intensity of recorded offenses in the city of Krakow. As part of the analysis:
 
 - I performed data preprocessing in ArcGIS.
 
